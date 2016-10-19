@@ -1,9 +1,10 @@
 import data from '../../db/results.json';
 
-const LabCardTemplate = (labN, accepted, result) => {
+const LabCardTemplate = (labN, result) => {
   let
-      color = accepted ? 'green' : 'red',
-      score = result.scores.reduce((res, curr) => res += curr);
+      score = result.scores.reduce((res, curr) => res += curr),
+      accepted = score >= 60,
+      color = accepted ? 'green' : 'red';
 
   const row = (i, score) => `<tr><td>${i}</td><td>${score}</td></tr>`;
 
@@ -20,7 +21,7 @@ const LabCardTemplate = (labN, accepted, result) => {
                 <tfoot>
                     <tr>
                         <th>Лабораторная работа: <strong>${accepted ? 'ПРИНЯТА': 'НЕ ПРИНЯТА'}</strong></th>
-                        ${accepted ? `<th>Итог: ${score}</th>`:'<th>Причина: Плагиат</th>'}
+                        ${accepted ? `<th>Итог: ${score}</th>`:'<th>Причина: Недостаточно баллов или плагиат</th>'}
                     </tr>
                 </tfoot>
             </table>
@@ -39,5 +40,13 @@ searchButton.on('click', () => {
   const ID = searchInput.val();
 
   resultBox.empty();
-  resultBox.append(LabCardTemplate(0, true, data.filter((item) => item.id == ID )[0]));
+
+  let results = data.filter((item) => item.id == ID );
+  console.log(results[0]);
+
+  if (results.length > 0) {
+    resultBox.append(LabCardTemplate(1, results[0]));
+  } else {
+    resultBox.append(`<div>Не найдено</div>`)
+  }
 });

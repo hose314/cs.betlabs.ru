@@ -63,6 +63,9 @@ def notify(all):
     """
     if all:
         click.secho('all', fg='yellow')
+        password = click.prompt('Enter account password', confirmation_prompt=False, hide_input=True)
+        status = ed.send_student_ids(password)
+        click.secho(status, fg='yellow')
     else:
         to = click.prompt('To')
         subject = click.prompt('Subject')
@@ -79,7 +82,7 @@ def upload():
     """
 
     # TODO: collect data from all existing test except initial test
-    data = dh.collect_data_from_test(103271)
+    data = dh.collect_data_from_test(105360)
     DataHelper.write_data(data, 'results.json')
 
 

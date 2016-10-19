@@ -11,9 +11,10 @@ os.chdir('..')
 INIT_TEST_ID = 103271
 DEFAULT_DB_PATH = os.getcwd() + '/db/'
 
+TESTS_IDS = [105360]
+
 
 class DataHelper:
-
     def __init__(self, api_instance):
         self._api = api_instance
 
@@ -23,9 +24,20 @@ class DataHelper:
 
     def collect_data_from_test(self, test_id):
         test_all_data = self._api.get_test_candidates(test_id=test_id)
-        test_data = [{'id': hashlib.sha256(str(test['email']).encode('utf-8')).hexdigest()[:16],
-                      'scores': self._calc_score(test['questions']),
-                      'plagiarism': test['plagiarism']} for test in test_all_data]
+        test_data = []
+
+        for test in test_all_data:
+            try:
+                test_data.append({
+                    'id': hashlib.sha256(str(test['email']).encode('utf-8')).hexdigest()[:16],
+                    'scores': self._calc_score(test['questions']),
+                    'plagiarism': test['plagiarism']})
+            except KeyError:
+                test_data.append({
+                    'id': hashlib.sha256(str(test['email']).encode('utf-8')).hexdigest()[:16],
+                    'scores': [0.0]
+                })
+
         return test_data
 
     @staticmethod
@@ -48,7 +60,6 @@ class DataHelper:
 
 
 class EmailDelivery:
-
     def __init__(self, username, host='smtp.yandex.ru', port='465'):
         self._username = username
         self._port = port
@@ -73,6 +84,32 @@ class EmailDelivery:
 
             try:
                 connection.sendmail(from_addr=self._username, to_addrs=to, msg=msg.as_string())
+            finally:
+                connection.quit()
+
+        except Exception as e:
+            status = str(e)
+
+        return status
+
+    def send_student_ids(self, password, subject="Твой id | CS MISIS"):
+
+        status = "Messages sent!"
+        mapping = DataHelper.read_data('students.json')
+
+        try:
+            connection = smtplib.SMTP_SSL(host=self._host, port=self._port)
+            connection.login(self._username, password)
+
+            try:
+                for item in mapping:
+                    msg = MIMEText(
+                        "Привет, {}! Вот твой id = {}. Чтобы узнать результаты лабораторной работы, введи свой id в разделе Мои Результаты по ссылке http://cs.betlabs.ru/?utm_source=Laba1".format(
+                            item['full_name'], item['id']), 'plain')
+                    msg['Subject'] = subject
+                    msg['From'] = self._username
+
+                    connection.sendmail(from_addr=self._username, to_addrs=item['email'], msg=msg.as_string())
             finally:
                 connection.quit()
 
