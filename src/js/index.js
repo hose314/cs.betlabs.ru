@@ -3,7 +3,7 @@ import data from '../../db/results.json';
 const LabCardTemplate = (labN, result) => {
   let
       score = result.scores.reduce((res, curr) => res += curr),
-      accepted = score >= 60,
+      accepted = score >= 35,
       color = accepted ? 'green' : 'red';
 
   const row = (i, score) => `<tr><td>${i}</td><td>${score}</td></tr>`;
